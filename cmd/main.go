@@ -33,10 +33,10 @@ func (s *server) Create(_ context.Context, req *desc.CreateRequest) (*desc.Creat
 
 func fakeRole() desc.Role {
 	if isAdmin := gofakeit.Bool(); isAdmin {
-		return desc.Role_ROLE_ADMIN
+		return desc.Role_ADMIN
 	}
 
-	return desc.Role_ROLE_USER
+	return desc.Role_USER
 }
 
 // Get ...
