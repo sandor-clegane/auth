@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: server.Dockerfile
     ports:
-      - "50051:50051"
+      - "50051:${GRPC_PORT}"
     depends_on:
       - migrator
     restart: on-failure
@@ -18,7 +18,7 @@ services:
       - "POSTGRES_USER=${PG_USER}"
       - "POSTGRES_PASSWORD=${PG_PASSWORD}"
     ports:
-      - "${PG_PORT}:5432"
+      - "54321:5432"
     volumes:
       - postgres_volume:/var/lib/postgresql/data
 
@@ -29,8 +29,6 @@ services:
     depends_on:
       - db
     restart: on-failure
-    environment:
-      DB_HOST: db
 
 volumes:
   postgres_volume:

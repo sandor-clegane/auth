@@ -3,9 +3,10 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /app/bin/auth cmd/main.go cmd/mapper.go
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /app/bin/auth cmd/main.go cmd/mapper.go cmd/impl.go
 
 FROM alpine:3.13
 WORKDIR /root/
 CMD ["./auth"]
 COPY --from=builder /app/bin/auth .
+COPY --from=builder /app/.env .

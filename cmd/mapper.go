@@ -6,11 +6,14 @@ import (
 	desc "github.com/sandor-clegane/auth/internal/generated/user_v1"
 )
 
+// Role роль пользователя
 type Role string
 
 const (
+	// Admin роль администратора
 	Admin Role = "ADMIN"
-	User  Role = "USER"
+	// User роль пользователя
+	User Role = "USER"
 )
 
 // TODO: separate layers
