@@ -19,9 +19,9 @@ const (
 // TODO: separate layers
 func roleToDB(role desc.Role) (Role, error) {
 	switch role {
-	case desc.Role_ROLE_ADMIN:
+	case desc.Role_ADMIN:
 		return Admin, nil
-	case desc.Role_ROLE_USER:
+	case desc.Role_USER:
 		return User, nil
 	default:
 		return "", fmt.Errorf("failed to convert role %v to db", role)
@@ -31,10 +31,10 @@ func roleToDB(role desc.Role) (Role, error) {
 func roleFromDB(role Role) desc.Role {
 	switch role {
 	case Admin:
-		return desc.Role_ROLE_ADMIN
+		return desc.Role_ADMIN
 	case User:
-		return desc.Role_ROLE_USER
+		return desc.Role_USER
 	default:
-		return desc.Role_ROLE_UNSPECIFIED
+		return desc.Role_UNSPECIFIED
 	}
 }
