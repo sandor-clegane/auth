@@ -3,15 +3,28 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	desc "github.com/sandor-clegane/auth/internal/generated/user_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+const (
+	usersTableName = "users"
+
+	usersColumnId        = "id"
+	usersColumnName      = "name"
+	usersColumnEmail     = "email"
+	usersColumnRole      = "role"
+	usersColumnCreatedAt = "created_at"
+	usersColumnUpdatedAt = "updated_at"
 )
 
 type server struct {
@@ -28,15 +41,15 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 		return nil, err
 	}
 
-	insertBuilder := sq.Insert("users").
+	insertBuilder := sq.Insert(usersTableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns("name", "email", "role").
+		Columns(usersColumnName, usersColumnEmail, usersColumnRole).
 		Values(
 			req.GetInfo().GetName(),
 			req.GetInfo().GetEmail(),
 			dbRole,
 		).
-		Suffix("RETURNING id")
+		Suffix(fmt.Sprintf("RETURNING %s", usersColumnId))
 
 	query, args, err := insertBuilder.ToSql()
 	if err != nil {
@@ -69,11 +82,11 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 		updatedAt sql.NullTime
 	)
 
-	selectBuilder := sq.Select("id", "name", "email",
-		"role", "created_at", "updated_at").
+	selectBuilder := sq.Select(usersColumnId, usersColumnName, usersColumnEmail,
+		usersColumnRole, usersColumnCreatedAt, usersColumnUpdatedAt).
 		PlaceholderFormat(sq.Dollar).
-		From("users").
-		Where(sq.Eq{"id": req.GetId()})
+		From(usersTableName).
+		Where(sq.Eq{usersColumnId: req.GetId()})
 
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -87,6 +100,11 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 			&role, &createdAt, &updatedAt,
 		)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("user not found", slog.Any("error", err))
+			return nil, err
+		}
+
 		slog.Error("failed to get user", slog.Any("error", err))
 		return nil, err
 	}
@@ -117,19 +135,19 @@ func buildUpdatesMap(req *desc.UpdateRequest) (map[string]interface{}, bool) {
 	updates := make(map[string]interface{})
 
 	if email := req.GetInfo().GetEmail().GetValue(); email != "" {
-		updates["email"] = email
+		updates[usersColumnEmail] = email
 	}
 
 	if name := req.GetInfo().GetName().GetValue(); name != "" {
-		updates["name"] = name
+		updates[usersColumnName] = name
 	}
 
 	if role, err := roleToDB(req.GetInfo().GetRole()); err == nil {
-		updates["role"] = role
+		updates[usersColumnRole] = role
 	}
 
 	if len(updates) != 0 {
-		updates["updated_at"] = time.Now()
+		updates[usersColumnUpdatedAt] = time.Now()
 		return updates, false
 	}
 
@@ -143,9 +161,9 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 		return &emptypb.Empty{}, nil
 	}
 
-	updateBuilder := sq.Update("users").
+	updateBuilder := sq.Update(usersTableName).
 		SetMap(updatedMap).
-		Where(sq.Eq{"id": req.GetId()}).
+		Where(sq.Eq{usersColumnId: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := updateBuilder.ToSql()
@@ -169,8 +187,8 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 
 // Delete ...
 func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	deleteBuilder := sq.Delete("users").
-		Where(sq.Eq{"id": req.GetId()}).
+	deleteBuilder := sq.Delete(usersTableName).
+		Where(sq.Eq{usersColumnId: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := deleteBuilder.ToSql()
