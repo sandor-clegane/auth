@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    ports:
+      - "50051:${GRPC_PORT}"
+    depends_on:
+      - migrator
+    restart: on-failure
+
+  db:
+    image: postgres:14-alpine3.17
+    environment:
+      - "POSTGRES_DB=${PG_DATABASE_NAME}"
+      - "POSTGRES_USER=${PG_USER}"
+      - "POSTGRES_PASSWORD=${PG_PASSWORD}"
+    ports:
+      - "54321:5432"
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+
+  migrator:
+    build:
+      context: .
+      dockerfile: migration.Dockerfile
+    depends_on:
+      - db
+    restart: on-failure
+
+volumes:
+  postgres_volume:
