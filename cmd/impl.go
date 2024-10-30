@@ -19,7 +19,7 @@ import (
 const (
 	usersTableName = "users"
 
-	usersColumnId        = "id"
+	usersColumnID        = "id"
 	usersColumnName      = "name"
 	usersColumnEmail     = "email"
 	usersColumnRole      = "role"
@@ -49,7 +49,7 @@ func (s *server) Create(ctx context.Context, req *desc.CreateRequest) (*desc.Cre
 			req.GetInfo().GetEmail(),
 			dbRole,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s", usersColumnId))
+		Suffix(fmt.Sprintf("RETURNING %s", usersColumnID))
 
 	query, args, err := insertBuilder.ToSql()
 	if err != nil {
@@ -82,11 +82,11 @@ func (s *server) Get(ctx context.Context, req *desc.GetRequest) (*desc.GetRespon
 		updatedAt sql.NullTime
 	)
 
-	selectBuilder := sq.Select(usersColumnId, usersColumnName, usersColumnEmail,
+	selectBuilder := sq.Select(usersColumnID, usersColumnName, usersColumnEmail,
 		usersColumnRole, usersColumnCreatedAt, usersColumnUpdatedAt).
 		PlaceholderFormat(sq.Dollar).
 		From(usersTableName).
-		Where(sq.Eq{usersColumnId: req.GetId()})
+		Where(sq.Eq{usersColumnID: req.GetId()})
 
 	query, args, err := selectBuilder.ToSql()
 	if err != nil {
@@ -163,7 +163,7 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 
 	updateBuilder := sq.Update(usersTableName).
 		SetMap(updatedMap).
-		Where(sq.Eq{usersColumnId: req.GetId()}).
+		Where(sq.Eq{usersColumnID: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := updateBuilder.ToSql()
@@ -188,7 +188,7 @@ func (s *server) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.
 // Delete ...
 func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
 	deleteBuilder := sq.Delete(usersTableName).
-		Where(sq.Eq{usersColumnId: req.GetId()}).
+		Where(sq.Eq{usersColumnID: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := deleteBuilder.ToSql()
